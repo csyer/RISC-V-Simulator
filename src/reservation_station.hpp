@@ -41,7 +41,6 @@ void ReservationStation::updateRely ( int dest, int value ) {
                 next_station[i].qj=-1, next_station[i].vj=value;
             if ( station[i].qk==dest ) 
                 next_station[i].qk=-1, next_station[i].vk=value;
-            // std::cerr <<"   update "<< i <<' '<< next_station[i].qj <<std::endl;
         }
 }
 void ReservationStation::excute ( ReorderBuffer& RoB, LoadStoreBuffer& LSB, RegisterGroup& Reg ) {
@@ -51,11 +50,9 @@ void ReservationStation::excute ( ReorderBuffer& RoB, LoadStoreBuffer& LSB, Regi
         if ( ~station[i].qk && RoB[station[i].qk].ready ) 
             next_station[i].vk=RoB[station[i].qk].value, next_station[i].qk=-1;
         if ( station[i].busy && !(~station[i].qj) && !(~station[i].qk) ) {
-            // std::cerr <<"    update busy "<< i <<std::endl;
             next_station[i].busy=0;
             int dest=station[i].dest,
                 value=FUNC[station[i].opt](station[i].vj, station[i].vk);
-            // std::cerr <<"    update "<< dest <<' '<< value <<std::endl;
             RoB.update(dest, value);
             LSB.updateRely(dest, value);
             this->updateRely(dest, value);
@@ -83,7 +80,6 @@ int ReservationStation::insertBranch ( int opt, int dest, int rs1, int rs2, Regi
                 else ins.qk=-1, ins.vk=RoB[rly].value;
             }
             else ins.vk=Reg.at(rs2), ins.qk=-1;
-            // std::cerr <<"rely "<< ins.qj <<' '<< ins.qk <<' '<< dest <<std::endl;
             ins.dest=dest;
             return i;
         }
@@ -104,7 +100,6 @@ int ReservationStation::insertImm ( int opt, int dest, int rs1, int imm, Registe
             ins.vk=imm;
             ins.qk=-1;
             ins.dest=dest;
-            // std::cerr <<"rely "<< rly <<' '<< ins.qk <<' '<< FUNC[0](ins.vj, ins.vk) <<std::endl;
             return i;
         }
     throw "RS is full";
@@ -127,7 +122,6 @@ int ReservationStation::insert ( int opt, int dest, int rs1, int rs2, RegisterGr
                 else ins.qk=-1, ins.vk=RoB[rly].value;
             }
             else ins.vk=Reg.at(rs2), ins.qk=-1;
-            // std::cerr <<"rely "<< ins.vj <<' '<< ins.vk <<' '<< dest <<std::endl;
             ins.dest=dest;
             return i;
         }

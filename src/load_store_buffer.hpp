@@ -73,25 +73,17 @@ void LoadStoreBuffer::updateRely ( int dest, int value ) {
 
 void LoadStoreBuffer::excute ( char* mem, ReorderBuffer& RoB, ReservationStation& RS, RegisterGroup& Reg ) {
     if ( buffer.empty() ) return ;
-    // for ( int i=buffer.begin() ; i!=buffer.end() ; i++ ) 
-    //     std::cerr << buffer[i].dest <<' ';
-    // std::cerr <<std::endl;
     MemoryInstruction ins=buffer.front();
-    // if ( buffer.begin()==23 ) {
-    //     std::cerr <<"------------debug "<< ins.vj <<' '<< ins.qj <<std::endl;
-    // }
     if ( ~ins.qj && RoB[ins.qj].ready ) ins.vj=RoB[ins.qj].value, ins.qj=-1;
     if ( ~ins.qk && RoB[ins.qk].ready ) ins.vk=RoB[ins.qk].value, ins.qk=-1;
     if ( !ins.type && !(~ins.qj) && !(~ins.qk) ) ins.ready=1;
     if ( ins.ready ) { // commit
-        // std::cerr <<"is ready"<<std::endl;
         int id=buffer.begin();
         --ins.count;
         if ( ins.count!=0 ) {
             next_buffer[id]=ins;
             return ;
         }
-        // std::cerr <<"count down end"<<std::endl;
         if ( ins.type==0 ) {
             int addr=ins.vj+ins.offset, value=0;
             unsigned int _value=0;
@@ -100,22 +92,16 @@ void LoadStoreBuffer::excute ( char* mem, ReorderBuffer& RoB, ReservationStation
             if ( ins.bit==7 ) _value=*reinterpret_cast<unsigned char const*>(mem+addr);
             if ( !ins.sign ) value=sext((int)_value, ins.bit);
             else value=_value;
-            // std::cerr <<"load "<< addr <<' '<< value <<" to "<< ins.dest <<' '<< ins.offset <<std::endl;
             RoB.update(ins.dest, value);
             RS.updateRely(ins.dest, value);
             this->updateRely(ins.dest, value);
-            // std::cerr <<"break"<<std::endl;
         }
         if ( ins.type==1 ) {
             int value=ins.vk, addr=ins.vj+ins.offset;
-            // std::cerr <<"store "<< value <<" in "<< addr <<' '<< ins.dest <<std::endl;
-            // std::cerr << ins.dest <<std::endl;
-            // std::cerr << std::hex << ins.vj <<std::endl;
             if ( ins.bit==31 ) *reinterpret_cast<unsigned int*>(mem+addr)=(unsigned int)value;
             if ( ins.bit==15 ) *reinterpret_cast<unsigned short*>(mem+addr)=(unsigned short)value;
             if ( ins.bit==7 ) *reinterpret_cast<unsigned char*>(mem+addr)=(unsigned char)value;
             RoB.update(ins.dest, 0);
-            // std::cerr << std::dec << "break"<<std::endl;
         }
         next_buffer.pop();
     }

@@ -38,8 +38,6 @@ class ReorderBuffer {
 
     BasicInstruction& operator[] ( const int );
     const BasicInstruction operator[] ( const int ) const;
-    // BasicInstruction& at ( const int );
-    // const BasicInstruction at ( const int) const;
 
     bool full ();
     void update ( int , int );
