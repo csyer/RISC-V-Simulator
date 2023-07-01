@@ -44,23 +44,20 @@ class Decoder {
         else if ( opcode==0b0110111 ) { // LUI: x[rd]=sext(immediate[31:12]<<12);
             int imm=get_code(code, 12, 31), 
                 rd=get_code(code, 7, 11);
-            if ( rd==0 ) return ;
-
             // std::cerr <<"LUI "<< rd <<' '<< (signed int)(imm<<12) <<std::endl;
 
             int id=RoB.push(BasicInstruction(0, rd, imm<<12, 1));
-            Reg.next_rely[rd]=id;
+            if ( rd!=0 ) Reg.next_rely[rd]=id;
             Reg.next_pc+=4;
         }
         else if ( opcode==0b0010111 ) { // AUIPC: x[rd]=pc+sext(immediate[31:12]<<12);
             int imm=get_code(code, 12, 31), 
                 rd=get_code(code, 7, 11);
-            if ( rd==0 ) return ;
 
             // std::cerr <<"AUIPC "<< rd <<' '<< Reg.pc+(imm<<12) <<std::endl;
 
             int id=RoB.push(BasicInstruction(0, rd, Reg.pc+(imm<<12), 1));
-            Reg.next_rely[rd]=id;
+            if ( rd!=0 ) Reg.next_rely[rd]=id;
             Reg.next_pc+=4;
         }
         else if ( opcode==0b1101111 ) { // JAL: x[rd]=pc+4, pc+=sext(offset);
@@ -74,10 +71,8 @@ class Decoder {
             // std::cerr <<"JAL "<< rd <<' '<< sext(offset, 20) <<std::endl;
             // std::cerr << get_code(code, 31, 31) <<' '<< code <<std::endl;
             Reg.next_pc+=sext(offset, 20);
-
-            if ( rd==0 ) return ;
             int id=RoB.push(BasicInstruction(0, rd, Reg.pc+4, 1));
-            Reg.next_rely[rd]=id;
+            if ( rd!=0 ) Reg.next_rely[rd]=id;
         }
         else if ( opcode==0b1100111 ) { // JALR: t=pc+4, pc=(x[rs1]+sext(offset))&~1, x[rd]=t;
             // std::cerr <<"JALR"<<std::endl;
@@ -85,10 +80,8 @@ class Decoder {
                 rd=get_code(code, 7, 11),
                 rs1=get_code(code, 15, 19);
             
-            if ( rd!=0 ) {
-                int id=RoB.push(BasicInstruction(0, rd, Reg.pc+4, 1));
-                Reg.next_rely[rd]=id;
-            }
+            int id=RoB.push(BasicInstruction(0, rd, Reg.pc+4, 1));
+            if ( rd!=0 ) Reg.next_rely[rd]=id;
 
             // std::cerr <<"JALR "<< rs1 <<' '<< Reg.rely[rs1] <<' '<< Reg.pc <<std::endl;
 
@@ -186,34 +179,30 @@ class Decoder {
             int rd=get_code(code, 7, 11), 
                 rs1=get_code(code, 15, 19), 
                 offset=get_code(code, 20, 31),
-                idcode=get_code(code, 12, 14);
-            if ( rd==0 ) return ;
+                idcode=get_code(code, 12, 14),
+                dest=0;
             if ( idcode==0b000 ) { // LB: x[rd]=sext(M[x[rs1]+sext(offset)][7:0]);
-                int dest=RoB.push(BasicInstruction(1, rd));
+                dest=RoB.push(BasicInstruction(1, rd));
                 LSB.pushLoad(rs1, sext(offset, 11), dest, 7, 0, mem, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b001 ) { // LH: x[rd]=sext(M[x[rs1]+sext(offset)][15:0]);
-                int dest=RoB.push(BasicInstruction(1, rd));
+                dest=RoB.push(BasicInstruction(1, rd));
                 LSB.pushLoad(rs1, sext(offset, 11), dest, 15, 0, mem, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b010 ) { // LW: x[rd]=sext(M[x[rs1]+sext(offset)][31:0]);
-                int dest=RoB.push(BasicInstruction(1, rd));
+                dest=RoB.push(BasicInstruction(1, rd));
                 LSB.pushLoad(rs1, sext(offset, 11), dest, 31, 0, mem, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b100 ) { // LBU: x[rd]=M[x[rs1]+sext(offset)][7:0];
-                int dest=RoB.push(BasicInstruction(1, rd));
+                dest=RoB.push(BasicInstruction(1, rd));
                 LSB.pushLoad(rs1, sext(offset, 11), dest, 7, 1, mem, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b101 ) { // LHU: x[rd]=M[x[rs1]+sext(offset)][15:0];
-                int dest=RoB.push(BasicInstruction(1, rd));
+                dest=RoB.push(BasicInstruction(1, rd));
                 LSB.pushLoad(rs1, sext(offset, 11), dest, 15, 1, mem, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else throw "Invalid Load Instruction";
+            if ( rd!=0 ) Reg.next_rely[rd]=dest;
             Reg.next_pc+=4;
         }
         else if ( opcode==0b0100011 ) {
@@ -250,60 +239,52 @@ class Decoder {
                 shamt=get_code(code, 20, 24),
                 rs1=get_code(code, 15, 19), 
                 rd=get_code(code, 7, 11),
-                idcode=get_code(code, 12, 14);
-            if ( rd==0 ) return ;
+                idcode=get_code(code, 12, 14),
+                dest=0;
             if ( idcode==0b000 ) { // ADDI: x[rd]=x[rs1]+sext(immediate);
                 // std::cerr <<"ADDI "<< rd <<' '<< rs1 <<' '<< imm <<std::endl;
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 RS.insertImm(0, dest, rs1, imm, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b010 ) { // SLTI: x[rd]=(x[rs1]<sext(immediate));
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 RS.insertImm(3, dest, rs1, imm, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b011 ) { // SLTIU: x[rd]=(unsigned(x[rs1])<sext(immediate));
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 RS.insertImm(4, dest, rs1, imm, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b100 ) { // XORI: x[rd]=x[rs1]^sext(immediate);
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 RS.insertImm(5, dest, rs1, imm, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b110 ) { // ORI: x[rd]=x[rs1]|sext(immediate);
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 RS.insertImm(8, dest, rs1, imm, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b111 ) { // ANDI: x[rd]=x[rs1]&sext(immediate);
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 RS.insertImm(9, dest, rs1, imm, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b001 ) { // SLLI: x[rd]=(x[rs1]<<shamt);
                 if ( shamt>>5 ) throw "Invalid SLLI Instruction";
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 RS.insertImm(2, dest, rs1, imm, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b101 ) { 
                 if ( shamt>>5 ) throw "Invalid SRI Instruction";
                 if ( get_code(code, 25, 31)==0b0000000 ) { // SRLI: x[rd]=(x[rs1]>>shamt);
-                    int dest=RoB.push(BasicInstruction(0, rd));
+                    dest=RoB.push(BasicInstruction(0, rd));
                     RS.insertImm(6, dest, rs1, imm, Reg, RoB);
-                    Reg.next_rely[rd]=dest;
                 }
                 else if ( get_code(code, 25, 31)==0b0100000 ) { // SRAI: x[rd]=sext(x[rs1]>>shamt);
-                    int dest=RoB.push(BasicInstruction(0, rd));
+                    dest=RoB.push(BasicInstruction(0, rd));
                     RS.insertImm(7, dest, rs1, imm, Reg, RoB);
-                    Reg.next_rely[rd]=dest;
                 }
                 else throw "Invalid SRI Instruction";
             }
             else throw "Invalid ALUI Instruction";
+            if ( rd!=0 ) Reg.next_rely[rd]=dest;
             Reg.next_pc+=4;
         }
         else if ( opcode==0b0110011 ) { 
@@ -312,66 +293,57 @@ class Decoder {
             int rd=get_code(code, 7, 11), 
                 rs1=get_code(code, 15, 19), 
                 rs2=get_code(code, 20, 24),
-                idcode=get_code(code, 12, 14);
-            if ( rd==0 ) return ;
+                idcode=get_code(code, 12, 14),
+                dest=0;
             if ( idcode==0b000 ) { 
                 if ( get_code(code, 25, 31)==0b0000000 ) { // ADD: x[rd]=x[rs1]+x[rs2];
-                    int dest=RoB.push(BasicInstruction(0, rd));
+                    dest=RoB.push(BasicInstruction(0, rd));
                     int id=RS.insert(0, dest, rs1, rs2, Reg, RoB);
-                    Reg.next_rely[rd]=dest;
                 }
                 else if ( get_code(code, 25, 31)==0b0100000 ) { // SUB: x[rd]=x[rs1]-x[rs2];
-                    int dest=RoB.push(BasicInstruction(0, rd));
+                    dest=RoB.push(BasicInstruction(0, rd));
                     int id=RS.insert(1, dest, rs1, rs2, Reg, RoB);
                     // std::cerr <<"SUB "<< rs1 <<' '<< rs2 <<' '<< id <<std::endl;
-                    Reg.next_rely[rd]=dest;
                 }
                 else throw "Invalid ADD/SUB Instruction";
             }
             else if ( idcode==0b001 ) { // SLL: x[rd]=(x[rs1]<<(x[rs2]&0b11111));
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 int id=RS.insert(2, dest, rs1, rs2, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b010 ) { // SLT: x[rd]=(x[rs1]<x[rs2]);
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 int id=RS.insert(3, dest, rs1, rs2, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b011 ) { // SLTU: x[rd]=(unsigned(x[rs1])<x[rs2]);
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 int id=RS.insert(4, dest, rs1, rs2, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b100 ) { // XOR: x[rd]=x[rs1]^x[rs2];
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 int id=RS.insert(5, dest, rs1, rs2, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b101 ) { 
                 if ( get_code(code, 25, 31)==0b0000000 ) { // SRL: x[rd]=x[rs1]>>(x[rs2]&0b11111);
-                    int dest=RoB.push(BasicInstruction(0, rd));
+                    dest=RoB.push(BasicInstruction(0, rd));
                     int id=RS.insert(6, dest, rs1, rs2, Reg, RoB);
-                    Reg.next_rely[rd]=dest;
                 }
                 else if ( get_code(code, 25, 31)==0b0100000 ) { // SRA: x[rd]=sext(x[rs1]>>(x[rs2]&0b11111));
-                    int dest=RoB.push(BasicInstruction(0, rd));
+                    dest=RoB.push(BasicInstruction(0, rd));
                     int id=RS.insert(7, dest, rs1, rs2, Reg, RoB);
-                    Reg.next_rely[rd]=dest;
                 }
                 else throw "Invalid SR Instruction";
             }
             else if ( idcode==0b110 ) { // OR: x[rd]=x[rs1]|x[rs2];
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 int id=RS.insert(8, dest, rs1, rs2, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else if ( idcode==0b111 ) { // AND: x[rd]=x[rs1]&x[rs2];
-                int dest=RoB.push(BasicInstruction(0, rd));
+                dest=RoB.push(BasicInstruction(0, rd));
                 int id=RS.insert(8, dest, rs1, rs2, Reg, RoB);
-                Reg.next_rely[rd]=dest;
             }
             else throw "Invalid ALU Instruction";
+            if ( rd!=0 ) Reg.next_rely[rd]=dest;
             Reg.next_pc+=4;
         }
         else throw "Invalid Instruction";

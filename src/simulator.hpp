@@ -48,7 +48,7 @@ class Simulator {
             }
         }
         catch ( int ret ) {
-            std::cout << ret <<std::endl;
+            printf("%u\n", unsigned(ret)&(0b11111111));
             return ;
         }
         catch ( const char* info ) {

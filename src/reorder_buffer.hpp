@@ -22,17 +22,17 @@ void ReorderBuffer::update ( int dest, int value ) {
 }
 
 int ReorderBuffer::push ( const BasicInstruction& ins ) {
-    // if ( next_buffer.end()==11 ) ins.print(); 
+    // if ( next_buffer.end()==14 ) ins.print(); 
     return next_buffer.push(ins); 
 }
 void ReorderBuffer::excute ( ReservationStation& RS, LoadStoreBuffer& LSB, RegisterGroup& Reg ) {
     if ( buffer.empty() ) return ;
     static int cnt=0;
     BasicInstruction ins=buffer.front();
-    // std::cerr <<"stall "<< ins.dest <<std::endl;
+    // std::cout <<"stall "<< ins.dest <<std::endl;
     if ( ins.ready ) { // commit
         int id=buffer.begin();
-        // std::cerr <<"commit "<< ++cnt <<' '<< ins.type <<std::endl;
+        // std::cerr <<"commit "<< ++cnt <<' '<< id <<' '<< ins.type <<std::endl;
         next_buffer.pop();
         if ( ins.type==-1 ) {
             // std::cerr <<"EXIT"<<std::endl;
