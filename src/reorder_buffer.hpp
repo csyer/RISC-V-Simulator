@@ -9,8 +9,10 @@ namespace cay {
 
 ReorderBuffer::ReorderBuffer (): stall(0), Jstall(-1), Jstall_offset(0) {}
 
-BasicInstruction& ReorderBuffer::operator[] ( const int idx ) { return next_buffer[idx]; }
-const BasicInstruction ReorderBuffer::operator[] ( const int idx ) const { return next_buffer[idx]; }
+BasicInstruction& ReorderBuffer::operator[] ( const int idx ) { return buffer[idx]; }
+const BasicInstruction ReorderBuffer::operator[] ( const int idx ) const { return buffer[idx]; }
+// BasicInstruction& ReorderBuffer::at ( const int idx ) { return buffer[idx]; }
+// const BasicInstruction ReorderBuffer::at ( const int idx ) const { return buffer[idx]; }
 
 bool ReorderBuffer::full () { return buffer.full(); }
 
@@ -64,9 +66,9 @@ void ReorderBuffer::excute ( ReservationStation& RS, LoadStoreBuffer& LSB, Regis
             return ;
         }
         Reg.update(id);
+        LSB.updateRely(id, ins.value);
         if ( ins.naive ) {
             RS.updateRely(id, ins.value);
-            LSB.updateRely(id, ins.value);
         }
         // for ( int i=0 ; i<32 ; i++ ) 
         //     std::cerr << (int)Reg[i] <<' ';

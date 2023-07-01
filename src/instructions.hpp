@@ -193,6 +193,7 @@ class Decoder {
             }
             else if ( idcode==0b010 ) { // LW: x[rd]=sext(M[x[rs1]+sext(offset)][31:0]);
                 dest=RoB.push(BasicInstruction(1, rd));
+                // std::cerr <<"LW "<< rd <<' '<< rs1 <<' '<< offset <<' '<< dest <<std::endl;
                 LSB.pushLoad(rs1, sext(offset, 11), dest, 31, 0, mem, Reg, RoB);
             }
             else if ( idcode==0b100 ) { // LBU: x[rd]=M[x[rs1]+sext(offset)][7:0];
@@ -226,8 +227,8 @@ class Decoder {
                 LSB[id].dest=dest;
             }
             else if ( idcode==0b010 ) { // SW: M[x[rs1]+sext(offset)]=x[rs2][31:0];
-                // std::cerr <<"SW "<< rs1 <<' '<< rs2 <<' '<< offset <<std::endl;
                 int id=LSB.pushStore(rs1, rs2, offset, 31, mem, Reg, RoB);
+                // std::cerr <<"SW "<< id <<' '<< rs1 <<' '<< rs2 <<' '<< offset <<std::endl;
                 int dest=RoB.push(BasicInstruction(3, id));
                 LSB[id].dest=dest;
                 // std::cerr <<"dest = "<< dest <<std::endl;
