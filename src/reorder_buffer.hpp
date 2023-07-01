@@ -25,7 +25,7 @@ int ReorderBuffer::push ( const BasicInstruction& ins ) {
     // if ( next_buffer.end()==14 ) ins.print(); 
     return next_buffer.push(ins); 
 }
-void ReorderBuffer::excute ( ReservationStation& RS, LoadStoreBuffer& LSB, RegisterGroup& Reg ) {
+void ReorderBuffer::excute ( ReservationStation& RS, LoadStoreBuffer& LSB, RegisterGroup& Reg, Predictor& Pre ) {
     if ( buffer.empty() ) return ;
     static int cnt=0;
     BasicInstruction ins=buffer.front();
@@ -33,8 +33,8 @@ void ReorderBuffer::excute ( ReservationStation& RS, LoadStoreBuffer& LSB, Regis
     if ( ins.ready ) { // commit
         int id=buffer.begin();
         // std::cerr <<"commit "<< ++cnt <<' '<< id <<std::endl;
-        ++cnt;
-        if ( cnt%1000000==0 ) std::cerr << cnt <<std::endl;
+        // ++cnt;
+        // if ( cnt%1000000==0 ) std::cerr << cnt <<std::endl;
         next_buffer.pop();
         if ( ins.type==-1 ) {
             // std::cerr <<"EXIT"<<std::endl;

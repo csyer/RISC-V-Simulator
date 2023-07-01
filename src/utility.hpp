@@ -12,7 +12,7 @@ int sext ( int x, int bit ) {
 
 struct BasicInstruction {
     int ready, naive;
-    int type, dest, src, value; 
+    int type, dest, src, value, pc;
     /* 
         type : 10 -> branch ; 0 -> register ; 1 -> memory
         dest : 10 -> pc     ; 0 -> idx      ; 1 -> idx
@@ -25,8 +25,10 @@ struct BasicInstruction {
         if ( type==2 ) src=_value;
         else value=_value;
     }
-    BasicInstruction ( int _type, int _dest, int _value, int _ready ): 
-        type(_type), dest(_dest), value(_value), ready(_ready), naive(1) {}
+    BasicInstruction ( int _type, int _dest, int _value, int _ready ): type(_type), dest(_dest) {
+        if ( _type==2 ) src=_value, pc=_ready, naive=ready=0;
+        else value=_value, ready=naive=1;
+    }
 
     BasicInstruction& operator= ( const BasicInstruction& obj ) {
         if ( this==&obj ) return *this;
@@ -36,6 +38,7 @@ struct BasicInstruction {
         dest=obj.dest;
         src=obj.src;
         value=obj.value;
+        pc=obj.pc;
         return *this;
     }
 

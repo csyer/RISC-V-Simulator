@@ -2,7 +2,6 @@
 #define INSTRUCTION_HPP
 
 #include "declaration.hpp"
-#include "predictor.hpp"
 #include "register_group.hpp"
 #include "utility.hpp"
 
@@ -16,7 +15,8 @@ class Decoder {
                   RegisterGroup& Reg, 
                   ReorderBuffer& RoB, 
                   ReservationStation& RS, 
-                  LoadStoreBuffer& LSB ) {
+                  LoadStoreBuffer& LSB,
+                  Predictor& Pre ) {
         if ( RoB.full() || RoB.stall ) return ;
 
         if ( ~RoB.Jstall ) {
@@ -109,22 +109,22 @@ class Decoder {
             if ( idcode==0b000 ) { // BEQ: if ( x[rs1]==x[rs2] ) pc+=sext(offset);
                 if ( Pre.predict(Reg.pc) ) {
                     Reg.next_pc+=sext(offset, 12);
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1, Reg.pc));
                 }
                 else {
                     Reg.next_pc+=4;
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0, Reg.pc));
                 }
                 RS.insertBranch(10, dest, rs1, rs2, Reg, RoB);
             }
             else if ( idcode==0b001 ) { // BNE: if ( x[rs1]!=x[rs2] ) pc+=sext(offset);
                 if ( Pre.predict(Reg.pc) ) {
                     Reg.next_pc+=sext(offset, 12);
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1, Reg.pc));
                 }
                 else {
                     Reg.next_pc+=4;
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0, Reg.pc));
                 }
                 // std::cerr <<"BNE "<< rs1 <<' '<< rs2 <<' '<< Reg.pc+sext(offset, 12) <<std::endl;
                 RS.insertBranch(11, dest, rs1, rs2, Reg, RoB);
@@ -132,44 +132,44 @@ class Decoder {
             else if ( idcode==0b100 ) { // BLT: if ( x[rs1]<x[rs2] ) pc+=sext(offset)
                 if ( Pre.predict(Reg.pc) ) {
                     Reg.next_pc+=sext(offset, 12);
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1, Reg.pc));
                 }
                 else {
                     Reg.next_pc+=4;
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0, Reg.pc));
                 }
                 RS.insertBranch(3, dest, rs1, rs2, Reg, RoB);
             }
             else if ( idcode==0b101 ) { // BGE: if ( x[rs1]>=x[rs2] ) pc+=sext(offset)
                 if ( Pre.predict(Reg.pc) ) {
                     Reg.next_pc+=sext(offset, 12);
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1, Reg.pc));
                 }
                 else {
                     Reg.next_pc+=4;
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0, Reg.pc));
                 }
                 RS.insertBranch(12, dest, rs1, rs2, Reg, RoB);
             }
             else if ( idcode==0b110 ) { // BLTU: if ( unsigned(x[rs1])<x[rs2] ) pc+=sext(offset);
                 if ( Pre.predict(Reg.pc) ) {
                     Reg.next_pc+=sext(offset, 12);
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1, Reg.pc));
                 }
                 else {
                     Reg.next_pc+=4;
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0, Reg.pc));
                 }
                 RS.insertBranch(4, dest, rs1, rs2, Reg, RoB);
             }
             else if ( idcode==0b111 ) { // BGEU: if ( unsigned(x[rs1])>=x[rs2] ) pc+=sext(offset);
                 if ( Pre.predict(Reg.pc) ) {
                     Reg.next_pc+=sext(offset, 12);
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+4, 1, Reg.pc));
                 }
                 else {
                     Reg.next_pc+=4;
-                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0));
+                    dest=RoB.push(BasicInstruction(2, Reg.pc+sext(offset, 12), 0, Reg.pc));
                 }
                 RS.insertBranch(13, dest, rs1, rs2, Reg, RoB);
             }
@@ -353,7 +353,6 @@ class Decoder {
     }
     
   private:
-    Predictor Pre;
     int get_code ( int code, int l, int r ) {
         unsigned int u_code=code;
         return (int)((u_code&((1ull<<(r+1))-1))>>l);

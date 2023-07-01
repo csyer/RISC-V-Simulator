@@ -2,6 +2,7 @@
 #define DECLARATION_HPP
 
 #include "register_group.hpp"
+#include "predictor.hpp"
 #include "utility.hpp"
 
 namespace cay {
@@ -41,7 +42,7 @@ class ReorderBuffer {
     bool full ();
     void update ( int , int );
     int push ( const BasicInstruction& );
-    void excute ( ReservationStation&, LoadStoreBuffer&, RegisterGroup& );
+    void excute ( ReservationStation&, LoadStoreBuffer&, RegisterGroup&, Predictor& );
     void clear ();
     void flush ();
   private:

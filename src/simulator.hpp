@@ -28,13 +28,13 @@ class Simulator {
         try {
             for ( ; ; ++clk ) {
                 // std::cerr <<" pc = "<< Reg.pc <<std::endl;
-                decoder.excute(mem, Reg, RoB, RS, LSB);
+                decoder.excute(mem, Reg, RoB, RS, LSB, Pre);
                 // std::cerr <<"Decoder end"<<std::endl;
                 RS.excute(RoB, LSB, Reg);
                 // std::cerr <<"RS end"<<std::endl;
                 LSB.excute(mem, RoB, RS, Reg);
                 // std::cerr <<"LSB end"<<std::endl;
-                RoB.excute(RS, LSB, Reg);
+                RoB.excute(RS, LSB, Reg, Pre);
                 // std::cerr <<"RoB end"<<std::endl;
                 
                 RoB.flush();
@@ -63,6 +63,7 @@ class Simulator {
     ReorderBuffer RoB;
     ReservationStation RS;
     LoadStoreBuffer LSB;
+    Predictor Pre;
 };
 
 }
