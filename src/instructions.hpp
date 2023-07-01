@@ -31,8 +31,10 @@ class Decoder {
         
         int code=*reinterpret_cast<unsigned int const*>(mem+Reg.pc);
 
-        // static int cnt=0;
-        // std::cerr <<"decoder "<< std::hex << (unsigned)code <<std::endl;
+        static int cnt=0;
+        // std::cerr << Reg.pc <<' ';
+        // std::cerr << std::hex << (unsigned)code ;
+        // std::cerr << std::dec <<std::endl;
 
         int opcode=get_code(code, 0, 6);
         if ( code==0x0ff00513 ) { // 
@@ -195,6 +197,7 @@ class Decoder {
             }
             else if ( idcode==0b100 ) { // LBU: x[rd]=M[x[rs1]+sext(offset)][7:0];
                 dest=RoB.push(BasicInstruction(1, rd));
+                // std::cerr <<"LBU "<< rd <<' '<< rs1 <<' '<< dest <<std::endl;
                 LSB.pushLoad(rs1, sext(offset, 11), dest, 7, 1, mem, Reg, RoB);
             }
             else if ( idcode==0b101 ) { // LHU: x[rd]=M[x[rs1]+sext(offset)][15:0];
@@ -298,49 +301,49 @@ class Decoder {
             if ( idcode==0b000 ) { 
                 if ( get_code(code, 25, 31)==0b0000000 ) { // ADD: x[rd]=x[rs1]+x[rs2];
                     dest=RoB.push(BasicInstruction(0, rd));
-                    int id=RS.insert(0, dest, rs1, rs2, Reg, RoB);
+                    RS.insert(0, dest, rs1, rs2, Reg, RoB);
                 }
                 else if ( get_code(code, 25, 31)==0b0100000 ) { // SUB: x[rd]=x[rs1]-x[rs2];
                     dest=RoB.push(BasicInstruction(0, rd));
-                    int id=RS.insert(1, dest, rs1, rs2, Reg, RoB);
+                    RS.insert(1, dest, rs1, rs2, Reg, RoB);
                     // std::cerr <<"SUB "<< rs1 <<' '<< rs2 <<' '<< id <<std::endl;
                 }
                 else throw "Invalid ADD/SUB Instruction";
             }
             else if ( idcode==0b001 ) { // SLL: x[rd]=(x[rs1]<<(x[rs2]&0b11111));
                 dest=RoB.push(BasicInstruction(0, rd));
-                int id=RS.insert(2, dest, rs1, rs2, Reg, RoB);
+                RS.insert(2, dest, rs1, rs2, Reg, RoB);
             }
             else if ( idcode==0b010 ) { // SLT: x[rd]=(x[rs1]<x[rs2]);
                 dest=RoB.push(BasicInstruction(0, rd));
-                int id=RS.insert(3, dest, rs1, rs2, Reg, RoB);
+                RS.insert(3, dest, rs1, rs2, Reg, RoB);
             }
             else if ( idcode==0b011 ) { // SLTU: x[rd]=(unsigned(x[rs1])<x[rs2]);
                 dest=RoB.push(BasicInstruction(0, rd));
-                int id=RS.insert(4, dest, rs1, rs2, Reg, RoB);
+                RS.insert(4, dest, rs1, rs2, Reg, RoB);
             }
             else if ( idcode==0b100 ) { // XOR: x[rd]=x[rs1]^x[rs2];
                 dest=RoB.push(BasicInstruction(0, rd));
-                int id=RS.insert(5, dest, rs1, rs2, Reg, RoB);
+                RS.insert(5, dest, rs1, rs2, Reg, RoB);
             }
             else if ( idcode==0b101 ) { 
                 if ( get_code(code, 25, 31)==0b0000000 ) { // SRL: x[rd]=x[rs1]>>(x[rs2]&0b11111);
                     dest=RoB.push(BasicInstruction(0, rd));
-                    int id=RS.insert(6, dest, rs1, rs2, Reg, RoB);
+                    RS.insert(6, dest, rs1, rs2, Reg, RoB);
                 }
                 else if ( get_code(code, 25, 31)==0b0100000 ) { // SRA: x[rd]=sext(x[rs1]>>(x[rs2]&0b11111));
                     dest=RoB.push(BasicInstruction(0, rd));
-                    int id=RS.insert(7, dest, rs1, rs2, Reg, RoB);
+                    RS.insert(7, dest, rs1, rs2, Reg, RoB);
                 }
                 else throw "Invalid SR Instruction";
             }
             else if ( idcode==0b110 ) { // OR: x[rd]=x[rs1]|x[rs2];
                 dest=RoB.push(BasicInstruction(0, rd));
-                int id=RS.insert(8, dest, rs1, rs2, Reg, RoB);
+                RS.insert(8, dest, rs1, rs2, Reg, RoB);
             }
             else if ( idcode==0b111 ) { // AND: x[rd]=x[rs1]&x[rs2];
                 dest=RoB.push(BasicInstruction(0, rd));
-                int id=RS.insert(8, dest, rs1, rs2, Reg, RoB);
+                RS.insert(8, dest, rs1, rs2, Reg, RoB);
             }
             else throw "Invalid ALU Instruction";
             if ( rd!=0 ) Reg.next_rely[rd]=dest;

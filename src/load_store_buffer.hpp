@@ -25,6 +25,7 @@ void LoadStoreBuffer::pushLoad ( int rs, int offset, int dest, int bit, int sign
     if ( ~rly ) {
         if ( !RoB[rly].ready ) ins.vj=rs, ins.qj=rly;
         else ins.vj=RoB[rly].value, ins.qj=-1;
+        // std::cerr <<"rely "<< rly <<std::endl;
     }
     else ins.ready=1, ins.qj=-1, ins.vj=Reg.at(rs);
     ins.qk=-1;
@@ -74,7 +75,9 @@ void LoadStoreBuffer::excute ( char* mem, ReorderBuffer& RoB, ReservationStation
     //     std::cerr << buffer[i].dest <<' ';
     // std::cerr <<std::endl;
     MemoryInstruction ins=buffer.front();
-    if ( ins.ready ) { // commit
+    if ( ~ins.qj && RoB[ins.qj].ready ) ins.vj=RoB[ins.qj].value, ins.qj=-1;
+    if ( ~ins.qk && RoB[ins.qk].ready ) ins.vk=RoB[ins.qk].value, ins.qk=-1;
+    if ( !(~ins.qj) && !(~ins.qk) || ins.ready ) { // commit
         // std::cerr <<"is ready"<<std::endl;
         int id=buffer.begin();
         --ins.count;
@@ -82,8 +85,6 @@ void LoadStoreBuffer::excute ( char* mem, ReorderBuffer& RoB, ReservationStation
             next_buffer[id].count--;
             return ;
         }
-        if ( ~ins.qj ) ins.vj=RoB[ins.qj].value;
-        if ( ~ins.qk ) ins.vk=RoB[ins.qk].value;
         // std::cerr <<"count down end"<<std::endl;
         if ( ins.type==0 ) {
             int addr=ins.vj+ins.offset, value=0;
@@ -92,9 +93,11 @@ void LoadStoreBuffer::excute ( char* mem, ReorderBuffer& RoB, ReservationStation
             if ( ins.bit==15 ) _value=*reinterpret_cast<unsigned short const*>(mem+addr);
             if ( ins.bit==7 ) _value=*reinterpret_cast<unsigned char const*>(mem+addr);
             if ( !ins.sign ) value=sext((int)_value, ins.bit);
+            else value=_value;
             // std::cerr <<"load "<< addr <<' '<< value <<" to "<< ins.dest <<' '<< ins.offset <<std::endl;
             RoB.update(ins.dest, value);
             RS.updateRely(ins.dest, value);
+            this->updateRely(ins.dest, value);
             // std::cerr <<"break"<<std::endl;
         }
         if ( ins.type==1 ) {

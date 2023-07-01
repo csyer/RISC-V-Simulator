@@ -32,14 +32,16 @@ void ReorderBuffer::excute ( ReservationStation& RS, LoadStoreBuffer& LSB, Regis
     // std::cout <<"stall "<< ins.dest <<std::endl;
     if ( ins.ready ) { // commit
         int id=buffer.begin();
-        // std::cerr <<"commit "<< ++cnt <<' '<< id <<' '<< ins.type <<std::endl;
+        // std::cerr <<"commit "<< ++cnt <<' '<< id <<std::endl;
+        ++cnt;
+        if ( cnt%1000000==0 ) std::cerr << cnt <<std::endl;
         next_buffer.pop();
         if ( ins.type==-1 ) {
             // std::cerr <<"EXIT"<<std::endl;
             throw Reg.at(10);
         }
-        if ( ins.type==0 ) Reg[ins.dest]=ins.value;//, std::cerr <<"  modify 0 "<< ins.dest <<' '<< ins.value <<std::endl;
-        if ( ins.type==1 ) Reg[ins.dest]=ins.value;//, std::cerr <<"  modify 1 "<< ins.dest <<' '<< ins.value <<std::endl;
+        if ( ins.type==0 && ins.dest!=0 ) Reg[ins.dest]=ins.value;//, std::cerr <<"  modify 0 "<< ins.dest <<' '<< ins.value <<std::endl;
+        if ( ins.type==1 && ins.dest!=0 ) Reg[ins.dest]=ins.value;//, std::cerr <<"  modify 1 "<< ins.dest <<' '<< ins.value <<std::endl;
         if ( ins.type==2 ) {
             if ( ins.value==ins.src ) {
                 // predictor hit
@@ -56,6 +58,9 @@ void ReorderBuffer::excute ( ReservationStation& RS, LoadStoreBuffer& LSB, Regis
                 Jstall=-1;
                 Jstall_offset=0;
             }
+            // for ( int i=0 ; i<32 ; i++ ) 
+            //     std::cerr << (int)Reg[i] <<' ';
+            // std::cerr <<std::endl;
             return ;
         }
         Reg.update(id);
