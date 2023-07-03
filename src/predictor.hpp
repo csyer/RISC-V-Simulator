@@ -9,7 +9,7 @@ class Predictor {
   public:
     Predictor () { memset(pre, 0, sizeof(pre)); }
     bool predict ( int pc ) {
-        return pre[pc/BLK]>>1, 0;
+        return pre[pc/BLK]>>1;
     }
 
     void hit ( int pc ) {
